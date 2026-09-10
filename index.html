@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เช็คชื่อเข้ากิจกรรม</title>
+<style>
+  :root{
+    --bg: #120a0b;
+    --panel: #1c1315;
+    --panel-2: #241819;
+    --line: #3a2224;
+    --red: #a8333a;
+    --red-bright: #c94a4f;
+    --text: #f1e6e6;
+    --text-dim: #b79b9c;
+    --mono: 'JetBrains Mono', 'Consolas', monospace;
+    --sans: 'Inter', 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:32px 16px;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+  }
+  h1{
+    font-size:1.5rem;
+    font-weight:700;
+    margin:0 0 4px;
+    letter-spacing:0.01em;
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:0.9rem;
+    margin:0 0 28px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  @media (max-width:720px){
+    .grid{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+  }
+  .panel h2{
+    font-size:0.95rem;
+    font-weight:600;
+    margin:0 0 10px;
+    color:var(--text);
+  }
+  .panel .hint{
+    font-size:0.78rem;
+    color:var(--text-dim);
+    margin:0 0 10px;
+    line-height:1.5;
+  }
+  textarea{
+    width:100%;
+    min-height:220px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:0.85rem;
+    padding:10px;
+    resize:vertical;
+    line-height:1.6;
+  }
+  textarea:focus{
+    outline:none;
+    border-color:var(--red);
+  }
+  .row-actions{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:var(--sans);
+    font-size:0.85rem;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color 0.15s, background 0.15s;
+  }
+  button:hover{
+    border-color:var(--red-bright);
+  }
+  button.primary{
+    background:var(--red);
+    border-color:var(--red);
+    color:#fff;
+  }
+  button.primary:hover{
+    background:var(--red-bright);
+    border-color:var(--red-bright);
+  }
+  button:disabled{
+    opacity:0.5;
+    cursor:default;
+  }
+  .status{
+    font-size:0.78rem;
+    color:var(--text-dim);
+    margin-top:8px;
+    min-height:16px;
+  }
+  .results{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-top:8px;
+  }
+  .results-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .results-head h2{
+    font-size:0.95rem;
+    margin:0;
+  }
+  .summary{
+    font-size:0.8rem;
+    color:var(--text-dim);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--mono);
+    font-size:0.85rem;
+  }
+  th, td{
+    text-align:left;
+    padding:7px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  th{
+    color:var(--text-dim);
+    font-weight:600;
+    font-size:0.75rem;
+    text-transform:none;
+  }
+  td.val{
+    text-align:center;
+    width:60px;
+    font-weight:700;
+  }
+  td.val.yes{ color: var(--red-bright); }
+  td.val.no{ color: var(--text-dim); }
+  .empty{
+    color:var(--text-dim);
+    font-size:0.85rem;
+    padding:20px 0;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>เช็คชื่อเข้ากิจกรรม</h1>
+  <p class="sub">บันทึกรายชื่อสมาชิกไว้ครั้งเดียว วางรายชื่อคนออนไลน์วันนี้ แล้วก็อปค่าไปแปะ Excel ได้เลย</p>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>รายชื่อสมาชิกทั้งหมด (roster)</h2>
+      <p class="hint">1 ชื่อต่อบรรทัด เรียงตามลำดับแถวในชีตจริง (รวมคนลาออกด้วย เพื่อให้แถวตรงกัน) — ถ้าใครลาออก/แถบแดง ให้ใส่ <b>!</b> นำหน้าชื่อ เช่น <code>!kyoko</code> แถวนั้นจะเว้นว่างในผลลัพธ์แทนที่จะใส่ 0/1 บันทึกไว้แล้วไม่ต้องพิมพ์ใหม่ทุกวัน</p>
+      <textarea id="roster" placeholder="InDyMaFia&#10;!kyoko&#10;BaiBai&#10;..."></textarea>
+      <div class="row-actions">
+        <button class="primary" id="saveRoster">บันทึก roster</button>
+        <span class="status" id="rosterStatus"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>รายชื่อคนออนไลน์วันนี้</h2>
+      <p class="hint">แนบภาพหน้าจอได้ทีละหลายภาพ แล้วกด "อ่านชื่อจากภาพ" ให้อ่านทุกภาพให้เอง (ฟรี ทำงานในเครื่อง ไม่มีค่าใช้จ่าย ไม่ต้องมี API key) หรือจะวางชื่อเองก็ได้เหมือนเดิม</p>
+
+      <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
+      <div class="row-actions" style="margin-bottom:10px;">
+        <button id="pickImage">เลือก/แนบภาพหน้าจอ (เลือกได้หลายภาพ)</button>
+        <button class="primary" id="readImageBtn" disabled>อ่านชื่อจากภาพ (ฟรี)</button>
+        <button id="clearImages" style="display:none;">ล้างภาพที่แนบ</button>
+        <span class="status" id="ocrStatus"></span>
+      </div>
+      <div id="imageThumbs" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+
+      <textarea id="online" placeholder="CrazyTatsumi&#10;Siriuz&#10;HyunA&#10;..."></textarea>
+      <p class="hint" style="margin-top:6px;">การอ่านภาพฟรีแบบนี้อาจอ่านผิดบ้างกับชื่อที่มีสัญลักษณ์แปลกๆ (ツ, 々 ฯลฯ) หรือภาษาไทย/จีนปนกัน เช็คแก้ในช่องนี้ก่อนกดเช็คชื่อได้เลย</p>
+      <div class="row-actions">
+        <button class="primary" id="checkBtn">เช็คชื่อ</button>
+        <button id="clearOnline">ล้างช่องนี้</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="results-head">
+      <h2>ผลลัพธ์</h2>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div id="resultsBody">
+      <div class="empty">ยังไม่มีผลลัพธ์ — บันทึก roster แล้วกดเช็คชื่อ</div>
+    </div>
+    <div class="row-actions" id="copyRow" style="display:none;">
+      <button class="primary" id="copyValues">คัดลอกคอลัมน์ 0/1 (แปะ Excel ได้เลย)</button>
+      <button id="copyBoth">คัดลอกชื่อ + ค่า (2 คอลัมน์)</button>
+      <span class="status" id="copyStatus"></span>
+    </div>
+    <div id="fallbackWrap" style="display:none; margin-top:12px;">
+      <p class="hint" style="margin-bottom:6px;">คัดลอกอัตโนมัติไม่ได้ในเบราว์เซอร์นี้ — กดในกล่องด้านล่างแล้วเลือกทั้งหมด (Ctrl+A) แล้ว Ctrl+C ได้เลย ข้อความถูกเลือกไว้ให้แล้ว</p>
+      <textarea id="fallbackArea" readonly style="min-height:120px;"></textarea>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script>
+const rosterEl = document.getElementById('roster');
+const onlineEl = document.getElementById('online');
+const rosterStatus = document.getElementById('rosterStatus');
+const resultsBody = document.getElementById('resultsBody');
+const summary = document.getElementById('summary');
+const copyRow = document.getElementById('copyRow');
+const copyStatus = document.getElementById('copyStatus');
+
+let lastResults = [];
+
+function parseLines(text){
+  return text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+}
+
+// Works both inside Claude's artifact sandbox (window.storage) and as a
+// plain downloaded HTML file opened directly in a browser (localStorage).
+const hasWidgetStorage = (typeof window.storage !== 'undefined') && (window.storage !== null);
+
+async function storageGet(key){
+  if (hasWidgetStorage) {
+    try {
+      const res = await window.storage.get(key, false);
+      return res ? res.value : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function storageSet(key, value){
+  if (hasWidgetStorage) {
+    try {
+      const res = await window.storage.set(key, value, false);
+      return !!res;
+    } catch (e) {
+      return false;
+    }
+  }
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function loadRoster(){
+  const value = await storageGet('roster-list');
+  if (value) {
+    rosterEl.value = value;
+    rosterStatus.textContent = 'โหลด roster ที่บันทึกไว้แล้ว';
+  }
+}
+
+document.getElementById('saveRoster').addEventListener('click', async () => {
+  const ok = await storageSet('roster-list', rosterEl.value);
+  if (ok) {
+    rosterStatus.textContent = 'บันทึกแล้ว (' + parseLines(rosterEl.value).length + ' ชื่อ)';
+  } else {
+    rosterStatus.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+  }
+  setTimeout(() => rosterStatus.textContent = '', 3000);
+});
+
+document.getElementById('clearOnline').addEventListener('click', () => {
+  onlineEl.value = '';
+});
+
+// --- Free, in-browser image reading (Tesseract.js OCR, no API key, no cost) ---
+// Note: this needs to create a Web Worker, which the Claude.ai artifact preview
+// sandbox blocks. It works fine once the file is actually opened as a normal
+// page (e.g. hosted on GitHub Pages) instead of previewed inside the chat.
+const imageInput = document.getElementById('imageInput');
+const pickImageBtn = document.getElementById('pickImage');
+const readImageBtn = document.getElementById('readImageBtn');
+const clearImagesBtn = document.getElementById('clearImages');
+const ocrStatus = document.getElementById('ocrStatus');
+const imageThumbs = document.getElementById('imageThumbs');
+
+let pendingImages = []; // array of data URLs
+
+pickImageBtn.addEventListener('click', () => imageInput.click());
+
+imageInput.addEventListener('change', () => {
+  const files = Array.from(imageInput.files || []);
+  files.forEach(loadImageFile);
+  imageInput.value = ''; // allow re-selecting the same file(s) later
+});
+
+function loadImageFile(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    pendingImages.push(reader.result);
+    renderThumbs();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderThumbs(){
+  imageThumbs.innerHTML = pendingImages.map((src, i) =>
+    '<img src="' + src + '" style="height:60px; border-radius:6px; border:1px solid var(--line);" title="ภาพที่ ' + (i + 1) + '">'
+  ).join('');
+  readImageBtn.disabled = pendingImages.length === 0;
+  clearImagesBtn.style.display = pendingImages.length > 0 ? 'inline-block' : 'none';
+  if (pendingImages.length > 0) {
+    ocrStatus.textContent = 'แนบไว้ ' + pendingImages.length + ' ภาพ';
+  }
+}
+
+clearImagesBtn.addEventListener('click', () => {
+  pendingImages = [];
+  renderThumbs();
+  ocrStatus.textContent = '';
+});
+
+// allow pasting screenshots straight from clipboard — each paste adds one more image
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData ? e.clipboardData.items : null;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.indexOf('image') === 0) {
+      const file = item.getAsFile();
+      if (file) loadImageFile(file);
+    }
+  }
+});
+
+readImageBtn.addEventListener('click', async () => {
+  if (pendingImages.length === 0) {
+    ocrStatus.textContent = 'ยังไม่ได้แนบภาพ';
+    return;
+  }
+  if (typeof Tesseract === 'undefined') {
+    ocrStatus.textContent = 'โหลดตัวอ่านภาพไม่สำเร็จ เช็คอินเทอร์เน็ตแล้วลองใหม่';
+    return;
+  }
+
+  readImageBtn.disabled = true;
+  const allNames = [];
+  const seen = new Set();
+
+  try {
+    for (let i = 0; i < pendingImages.length; i++) {
+      ocrStatus.textContent = 'กำลังอ่านภาพที่ ' + (i + 1) + '/' + pendingImages.length + '...';
+
+      const { data: { text } } = await Tesseract.recognize(pendingImages[i], 'eng', {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            ocrStatus.textContent = 'ภาพที่ ' + (i + 1) + '/' + pendingImages.length + ' — ' + Math.round(m.progress * 100) + '%';
+          }
+        }
+      });
+
+      text.split('\n').map(s => s.trim()).filter(s => s.length > 0).forEach(name => {
+        const key = name.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          allNames.push(name);
+        }
+      });
+    }
+
+    if (allNames.length === 0) {
+      throw new Error('ไม่พบข้อความในภาพ');
+    }
+
+    onlineEl.value = allNames.join('\n');
+    ocrStatus.textContent = 'อ่านได้ ' + allNames.length + ' ชื่อ (ไม่ซ้ำ) จาก ' + pendingImages.length + ' ภาพ — ช่วยตรวจทานก่อนกดเช็คชื่อด้วย';
+  } catch (e) {
+    ocrStatus.textContent = 'อ่านไม่สำเร็จ: ' + e.message;
+  } finally {
+    readImageBtn.disabled = false;
+  }
+});
+
+document.getElementById('checkBtn').addEventListener('click', () => {
+  const rosterLines = parseLines(rosterEl.value);
+  const online = parseLines(onlineEl.value).map(s => s.toLowerCase());
+
+  if (rosterLines.length === 0) {
+    resultsBody.innerHTML = '<div class="empty">ยังไม่มี roster — ใส่รายชื่อสมาชิกแล้วกดบันทึกก่อน</div>';
+    copyRow.style.display = 'none';
+    summary.textContent = '';
+    return;
+  }
+
+  lastResults = rosterLines.map(line => {
+    const resigned = line.startsWith('!');
+    const name = resigned ? line.slice(1).trim() : line;
+    if (resigned) {
+      return { name, resigned: true, value: '' };
+    }
+    const found = online.includes(name.toLowerCase());
+    return { name, resigned: false, value: found ? 1 : 0 };
+  });
+
+  const activeResults = lastResults.filter(r => !r.resigned);
+  const matchedCount = activeResults.filter(r => r.value === 1).length;
+  summary.textContent = 'เข้า ' + matchedCount + ' / ' + activeResults.length + ' คน (เว้นว่าง ' + (lastResults.length - activeResults.length) + ' คนที่ลาออก)';
+
+  let html = '<table><thead><tr><th>ชื่อ</th><th>ผล</th></tr></thead><tbody>';
+  lastResults.forEach(r => {
+    if (r.resigned) {
+      html += '<tr><td style="color:var(--text-dim); text-decoration: line-through;">' + escapeHtml(r.name) + '</td><td class="val no">-</td></tr>';
+    } else {
+      html += '<tr><td>' + escapeHtml(r.name) + '</td><td class="val ' + (r.value ? 'yes' : 'no') + '">' + r.value + '</td></tr>';
+    }
+  });
+  html += '</tbody></table>';
+  resultsBody.innerHTML = html;
+  copyRow.style.display = 'flex';
+});
+
+document.getElementById('copyValues').addEventListener('click', async () => {
+  const text = lastResults.map(r => r.value).join('\n');
+  await copyToClipboard(text);
+});
+
+document.getElementById('copyBoth').addEventListener('click', async () => {
+  const text = lastResults.map(r => r.name + '\t' + r.value).join('\n');
+  await copyToClipboard(text);
+});
+
+async function copyToClipboard(text){
+  const fallbackWrap = document.getElementById('fallbackWrap');
+  const fallbackArea = document.getElementById('fallbackArea');
+
+  // Method 1: modern clipboard API
+  try {
+    if (navigator.clipboard && window.isSecureContext !== false) {
+      await navigator.clipboard.writeText(text);
+      copyStatus.textContent = 'คัดลอกแล้ว วางใน Excel ได้เลย';
+      fallbackWrap.style.display = 'none';
+      setTimeout(() => copyStatus.textContent = '', 3000);
+      return;
+    }
+  } catch (e) {
+    // fall through to method 2
+  }
+
+  // Method 2: legacy execCommand via a temporary textarea
+  try {
+    const temp = document.createElement('textarea');
+    temp.value = text;
+    temp.style.position = 'fixed';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(temp);
+    if (ok) {
+      copyStatus.textContent = 'คัดลอกแล้ว วางใน Excel ได้เลย';
+      fallbackWrap.style.display = 'none';
+      setTimeout(() => copyStatus.textContent = '', 3000);
+      return;
+    }
+  } catch (e) {
+    // fall through to method 3
+  }
+
+  // Method 3: show a selected textarea so the person can copy manually
+  copyStatus.textContent = 'คัดลอกอัตโนมัติไม่ได้ ใช้กล่องด้านล่างแทน';
+  fallbackWrap.style.display = 'block';
+  fallbackArea.value = text;
+  fallbackArea.focus();
+  fallbackArea.select();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+loadRoster();
+</script>
+</body>
+</html>
